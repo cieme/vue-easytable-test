@@ -39,12 +39,13 @@ export default {
         afterPaste: ({ selectionRangeIndexes }) => {
           const { startRowIndex, startColIndex } = selectionRangeIndexes;
           const oldData = this.copyData;
+          // console.log(oldData);
           let tableDataRow = startRowIndex;
           for (let index = 0; index < oldData.length; index++) {
             const element = oldData[index];
             let tableDataCol = startColIndex;
             const xData = this.tableData[tableDataRow];
-            if (!xData) {
+            if (xData == undefined) {
               return;
             }
             /*  */
@@ -67,31 +68,7 @@ export default {
           this.copyData = data;
         },
         afterCut: ({ selectionRangeIndexes }) => {
-          const { startRowIndex, startColIndex } = selectionRangeIndexes;
-          const oldData = this.copyData;
-          let tableDataRow = startRowIndex;
-          for (let index = 0; index < oldData.length; index++) {
-            const element = oldData[index];
-            let tableDataCol = startColIndex;
-            const xData = this.tableData[tableDataRow];
-            if (!xData) {
-              return;
-            }
-            /*  */
-            for (const key in element) {
-              if (Object.hasOwnProperty.call(element, key)) {
-                const item = element[key];
-                // console.log(item);
-                this.$set(
-                  xData,
-                  tableDataCol++,
-                  JSON.parse(JSON.stringify(item))
-                );
-                // xData[tableDataCol++] = item;
-              }
-            }
-            tableDataRow++;
-          }
+          this.clipboardOption.afterPaste({ selectionRangeIndexes });
         },
         // afterDelete: ({ data, selectionRangeIndexes, selectionRangeKeys }) => {
         //   data, selectionRangeIndexes, selectionRangeKeys;
