@@ -3,6 +3,7 @@
     <div class="btn-group">
       <button @click="addRow">添加行</button>
       <button @click="addCol">添加列</button>
+      <button @click="saveData">保存数据</button>
     </div>
     <ve-table
       max-height="calc(100%)"
@@ -141,10 +142,11 @@ export default {
         // column resize min width
         minWidth: 30,
         // column size change
-        sizeChange: ({ column, differWidth, columnWidth }) => {
-          this.columnResizeInfo.column = column;
-          this.columnResizeInfo.differWidth = differWidth;
-          this.columnResizeInfo.columnWidth = columnWidth;
+        sizeChange: ({ column, columnWidth }) => {
+          const currentColumn = this.columns.find(
+            (item) => item.key === column.key
+          );
+          currentColumn.width = columnWidth;
         },
       },
       columns: [
@@ -214,7 +216,7 @@ export default {
       });
     },
     initColumns() {
-      for (let i = 0; i < 9; i++) {
+      for (let i = 0; i < 3; i++) {
         this.columns.push({
           key: `${i + 1}`,
           title: `title_${i + 1}`,
@@ -230,8 +232,10 @@ export default {
               width: 100,
               renderBodyCell: ({ row, column, rowIndex }, h) => {
                 row, column, rowIndex, h;
-                if (row[`${i + 1}`] instanceof Array) {
-                  return row[`${i + 1}`].map((item) => item.data).join(",");
+                if (row[`${i + 1}`]?.data instanceof Array) {
+                  return row[`${i + 1}`].data
+                    .map((item) => item.data)
+                    .join(",");
                 }
                 return row[`${i + 1}`]?.data;
               },
@@ -242,20 +246,24 @@ export default {
     },
     initTableData() {
       const data = [];
-      for (let i = 0; i < 13; i++) {
+      for (let i = 0; i < 4; i++) {
         const obj = {};
-        if (i < 8) {
-          for (let j = 0; j < 8; j++) {
+        if (i < 3) {
+          for (let j = 0; j < 3; j++) {
             obj[`${j + 1}`] = {
+              isEdit: false,
               data: `${j + 1}_${i + 1}`,
             };
           }
-          obj[`9`] = [{ data: "11" }, { data: "22" }, { data: "33" }];
+          obj[`3`] = {
+            isEdit: false,
+            data: [{ data: "11" }, { data: "22" }, { data: "33" }],
+          };
         } else {
-          for (let j = 0; j < 8; j++) {
+          for (let j = 0; j < 3; j++) {
             obj[`${j + 1}`] = null;
           }
-          obj[`9`] = null;
+          obj[`3`] = null;
         }
         obj.rowKey = i;
         data.push(obj);
@@ -306,6 +314,14 @@ export default {
         const obj = this.tableData[index];
         this.$set(obj, `${colLength + 1}`, null);
       }
+    },
+    saveData() {
+      /*  */
+      // const data = {
+      //   columns: this.columns,
+      //   tableData: {},
+      // };
+      console.log(this.tableData);
     },
   },
 };
