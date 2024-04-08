@@ -19,6 +19,7 @@
       row-key-field-name="rowKey"
       :clipboard-option="clipboardOption"
       :columnWidthResizeOption="columnWidthResizeOption"
+      :eventCustomOption="eventCustomOption"
     />
   </div>
 </template>
@@ -27,19 +28,67 @@
 export default {
   data() {
     return {
+      eventCustomOption: {
+        // body 列事件自定义
+        bodyCellEvents: ({ row, column, rowIndx }) => {
+          return {
+            click: (event) => {
+              if (event.shiftKey) {
+                this.$refs.veTable.$refs.editInputRef.$refs.textareaInputRef.focus();
+                return;
+              }
+            },
+            dblclick: () => {
+              console.log("bodyCellEvents click", row, column, rowIndx);
+            },
+          };
+        },
+      },
+
       copyData: null,
       clipboardOption: {
         copy: true,
-        paste: true,
-        cut: true,
+        paste: false,
+        cut: false,
         delete: true,
         beforeCopy: ({ data }) => {
+          this.clipboardOption.paste = true;
           this.copyData = data;
         },
-        afterPaste: ({ selectionRangeIndexes }) => {
-          const { startRowIndex, startColIndex } = selectionRangeIndexes;
+        afterPaste: ({ data, selectionRangeIndexes }) => {
           const oldData = this.copyData;
-          // console.log(oldData);
+          const { startRowIndex, startColIndex } = selectionRangeIndexes;
+
+          if (oldData == null) {
+            let tableDataRow = startRowIndex;
+            for (let index = 0; index < data.length; index++) {
+              const element = data[index];
+              let tableDataCol = startColIndex;
+              const xData = this.tableData[tableDataRow];
+              if (xData == undefined) {
+                return;
+              }
+              /*  */
+              for (const key in element) {
+                if (Object.hasOwnProperty.call(element, key)) {
+                  const item = element[key];
+                  let obj = {};
+                  if (item !== "[object Object]") {
+                    obj = JSON.parse(JSON.stringify(item));
+                  } else if (typeof item === "object") {
+                    obj = JSON.parse(JSON.stringify(item));
+                  } else {
+                    obj = item;
+                  }
+                  this.$set(xData, tableDataCol++, obj);
+                  // xData[tableDataCol++] = item;
+                }
+              }
+              tableDataRow++;
+            }
+            return;
+          }
+          /* 正常复制 */
           let tableDataRow = startRowIndex;
           for (let index = 0; index < oldData.length; index++) {
             const element = oldData[index];
@@ -52,7 +101,7 @@ export default {
             for (const key in element) {
               if (Object.hasOwnProperty.call(element, key)) {
                 const item = element[key];
-                // console.log(item);
+
                 this.$set(
                   xData,
                   tableDataCol++,
@@ -67,13 +116,14 @@ export default {
         beforeCut: ({ data }) => {
           this.copyData = data;
         },
-        afterCut: ({ selectionRangeIndexes }) => {
-          this.clipboardOption.afterPaste({ selectionRangeIndexes });
+        afterCut: () => {
+          /* 剪切本身不应该赋值,处理粘贴就好了 */
+          // this.clipboardOption.afterPaste({ selectionRangeIndexes });
         },
-        // afterDelete: ({ data, selectionRangeIndexes, selectionRangeKeys }) => {
-        //   data, selectionRangeIndexes, selectionRangeKeys;
-        //   // this.log({ data, selectionRangeIndexes, selectionRangeKeys });
-        // },
+        afterDelete: () => {
+          /* 删除会让其变为 字符串 */
+          // data, selectionRangeIndexes, selectionRangeKeys
+        },
       },
       columnResizeInfo: {
         column: "",
@@ -150,23 +200,25 @@ export default {
           });
           document.dispatchEvent(newEvent);
         }
+        // if (event.keyCode == 67 && (event.metaKey || event.ctrlKey)) {
+        //   const newEvent = new ClipboardEvent("copy");
+        //   document.dispatchEvent(newEvent);
+        //   this.$refs.veTable.$refs.editInputRef.$refs.textareaInputRef.dispatchEvent(
+        //     newEvent
+        //   );
+        // }
       };
       document.addEventListener("keydown", handle);
       this.$once("hook:beforeDestroy", () => {
         document.removeEventListener("keydown", handle);
       });
     },
-    log({ data, selectionRangeIndexes, selectionRangeKeys }) {
-      console.log("data::", data);
-      console.log("selectionRangeIndexes::", selectionRangeIndexes);
-      console.log("selectionRangeKeys::", selectionRangeKeys);
-    },
     initColumns() {
       for (let i = 0; i < 9; i++) {
         this.columns.push({
           key: `${i + 1}`,
           title: `title_${i + 1}`,
-          edit: true,
+          edit: false,
           width: 100,
           align: "center",
           children: [
@@ -174,7 +226,7 @@ export default {
               field: `${i + 1}`,
               key: `${i + 1}`,
               title: `string`,
-              edit: true,
+              edit: false,
               width: 100,
               renderBodyCell: ({ row, column, rowIndex }, h) => {
                 row, column, rowIndex, h;
@@ -209,7 +261,7 @@ export default {
         data.push(obj);
       }
       this.tableData = data;
-      console.log(data);
+      // console.log(data);
     },
     addRow() {
       const obj = {};
@@ -248,13 +300,12 @@ export default {
       const colLength = Object.keys(this.tableData[0]).filter(
         (item) => item !== "rowKey"
       ).length;
-      console.log(colLength);
+
       /* 处理数据 */
       for (let index = 0; index < colLength; index++) {
         const obj = this.tableData[index];
         this.$set(obj, `${colLength + 1}`, null);
       }
-      // console.log(this.tableData);
     },
   },
 };
@@ -279,4 +330,8 @@ body {
   left: 0;
   z-index: 999;
 }
+/* .ve-table .ve-table-edit-input-container {
+  opacity: 1 !important;
+  z-index: 2 !important;
+} */
 </style>
