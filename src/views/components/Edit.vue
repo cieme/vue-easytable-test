@@ -8,13 +8,13 @@
       autosize
       v-model="cellData.data"
       ref="textareaInputRef"
-      @input="inputHandle"
-      @keydown.native="keydownHandle"
+      @input.native="inputHandle"
     />
     {{ cellData.data }}
   </div>
 </template>
 <script>
+// @keydown.native="keydownHandle"
 export default {
   // eslint-disable-next-line vue/multi-word-component-names
   name: "Edit",

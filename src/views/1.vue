@@ -33,7 +33,7 @@
 import clickoutside from "./directives/clickoutside";
 import BodyCell from "./components/bodyCell.vue";
 export default {
-  name: "1View",
+  name: "ViewView1",
   components: {
     // eslint-disable-next-line vue/no-unused-components
     BodyCell,
@@ -394,7 +394,7 @@ body {
   height: 100vh;
 }
 .vue-table-root {
-  height: 100%;
+  height: 100vh;
 }
 .btn-group {
   position: absolute;

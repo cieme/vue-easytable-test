@@ -33,7 +33,7 @@
 import clickoutside from "./directives/clickoutside";
 import BodyCell from "./components/bodyCell.vue";
 export default {
-  name: "2View",
+  name: "ViewView2",
   components: {
     // eslint-disable-next-line vue/no-unused-components
     BodyCell,
@@ -64,6 +64,8 @@ export default {
               }
             },
             dblclick: () => {
+              if (column.key == "index") return false;
+
               rowIndex;
               if (this.editData) {
                 this.editData.isEdit = false;
@@ -72,13 +74,11 @@ export default {
               row[column.key].isEdit = true;
               this.editData = row[column.key];
               this.isEditToggle(true);
-              /*  */
-              // this.cellSelectionToggle(false);
             },
           };
         },
       },
-
+      editOption: {},
       clipboardOption: {
         copy: true,
         paste: false,
@@ -133,18 +133,51 @@ export default {
             return false;
           }
         },
-        afterDelete: () => {
-          /* 删除会让其变为 字符串 */
-          // data, selectionRangeIndexes, selectionRangeKeys
+        afterDelete: ({ data, selectionRangeIndexes }) => {
+          if (data == null) {
+            return;
+          }
+          const { startRowIndex, startColIndex } = selectionRangeIndexes;
+          let tableDataRow = startRowIndex;
+          console.log(tableDataRow);
+
+          for (let index = 0; index < data.length; index++) {
+            const element = data[index];
+            let tableDataCol = startColIndex - 1;
+            const xData = this.tableData[tableDataRow];
+
+            if (xData == undefined) {
+              return;
+            }
+            /*  */
+            for (const key in element) {
+              if (Object.hasOwnProperty.call(element, key)) {
+                let item = element[key];
+
+                if (item === "" || item === null || item === undefined) {
+                  item = {
+                    isEdit: false,
+                    data: "",
+                  };
+                }
+                /* 清空值 */
+                item.data = "";
+                xData[tableDataCol++] = item;
+              }
+            }
+            tableDataRow++;
+          }
         },
       },
       cellSelectionOption: {
         enable: true,
       },
+      /*  */
       rowStyleOption: {
         clickHighlight: false,
         hoverHighlight: false,
       },
+      /* 拖拽宽度配置 */
       columnWidthResizeOption: {
         // default false
         enable: true,
@@ -159,6 +192,7 @@ export default {
           currentColumn.width = columnWidth;
         },
       },
+      /* 表头 */
       columns: [
         {
           key: "index",
@@ -195,7 +229,15 @@ export default {
   },
   mounted() {
     this.addEvent();
-    this.$refs.veTable.enableStopEditing = false;
+    this.$once("hook:beforeDestroy", () => {
+      this.removeEvent();
+    });
+    this.$nextTick(() => {
+      document.removeEventListener(
+        "keydown",
+        this.$refs.veTable.dealKeydownEvent
+      );
+    });
   },
 
   methods: {
@@ -207,52 +249,57 @@ export default {
     },
     isEditToggle(enable) {
       this.isEdit = enable;
-      // console.log(enable);
+
       // if (enable) {
+      //   // 按下上、下、左、右按键可以直接选中其他单元格，并停止当前单元格编辑状态
+      //   this.$refs.veTable.enableStopEditing = false;
       //   /* 打开 */
-      //   console.log("打开");
-      //   this.$set(this.clipboardOption, "delete", false);
+
+      //   // this.$set(this.clipboardOption, "delete", false);
       // } else {
-      //   console.log("禁用");
-      //   this.$set(this.clipboardOption, "delete", true);
+      //   // 按下上、下、左、右按键可以直接选中其他单元格，并停止当前单元格编辑状态
+      //   this.$refs.veTable.enableStopEditing = true;
+      //   // this.$set(this.clipboardOption, "delete", true);
       // }
     },
-    addEvent() {
-      const handle = (event) => {
-        // if (this.isEdit) {
-        //   return;
-        // }
-        if (event.keyCode == 8) {
-          const newEvent = new KeyboardEvent("keydown", {
-            key: "Backspace",
-            code: "Backspace",
-            keyCode: 46,
-            which: 46,
-            charCode: 46,
-            cancelable: true,
-            bubbles: true,
-          });
-          document.dispatchEvent(newEvent);
+    handle(event) {
+      // if (this.isEdit) {
+      //   return;
+      // }
+      // if (event.keyCode == 8) {
+      //   const newEvent = new KeyboardEvent("keydown", {
+      //     key: "Backspace",
+      //     code: "Backspace",
+      //     keyCode: 46,
+      //     which: 46,
+      //     charCode: 46,
+      //     cancelable: true,
+      //     bubbles: true,
+      //   });
+      //   document.dispatchEvent(newEvent);
+      // }
+      /* 如果是删除或者退格 */
+      if (event.keyCode == 8 || event.keyCode == 46) {
+        if (this.isEdit) {
+          return false;
         }
-        // if (event.keyCode == 67 && (event.metaKey || event.ctrlKey)) {
-        //   const newEvent = new ClipboardEvent("copy");
-        //   document.dispatchEvent(newEvent);
-        //   this.$refs.veTable.$refs.editInputRef.$refs.textareaInputRef.dispatchEvent(
-        //     newEvent
-        //   );
-        // }
-      };
-      const handle2 = (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        this.clickoutsideHandle();
-      };
-      document.addEventListener("keydown", handle);
-      document.addEventListener("contextmenu", handle2);
-      this.$once("hook:beforeDestroy", () => {
-        document.removeEventListener("keydown", handle);
-        document.removeEventListener("contextmenu", handle2);
-      });
+        // const data = this.$refs.veTable.getRangeCellSelection();
+        this.$refs.veTable.deleteCellSelectionRangeValue();
+      }
+    },
+    handle2(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      this.clickoutsideHandle();
+    },
+    addEvent() {
+      /*  */
+      document.addEventListener("keydown", this.handle);
+      document.addEventListener("contextmenu", this.handle2);
+    },
+    removeEvent() {
+      document.removeEventListener("keydown", this.handle);
+      document.removeEventListener("contextmenu", this.handle2);
     },
     initColumns() {
       for (let i = 0; i < 3; i++) {
@@ -395,6 +442,9 @@ body {
 }
 .vue-table-root {
   height: 100%;
+}
+.ve-table {
+  height: 100vh;
 }
 .btn-group {
   position: absolute;
