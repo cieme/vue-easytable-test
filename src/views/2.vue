@@ -2,9 +2,9 @@
   <div class="container">
     <div v-click-outside="clickoutsideHandle" style="background: red">
       <div class="btn-group">
-        <button @click="addRow">添加行</button>
-        <button @click="addCol">添加列</button>
-        <button @click="saveData">保存数据</button>
+        <button @click="addRow">添加行2</button>
+        <button @click="addCol">添加列2</button>
+        <button @click="saveData">保存数据2</button>
       </div>
       <ve-table
         max-height="calc(100%)"
@@ -33,6 +33,7 @@
 import clickoutside from "./directives/clickoutside";
 import BodyCell from "./components/bodyCell.vue";
 export default {
+  name: "2View",
   components: {
     // eslint-disable-next-line vue/no-unused-components
     BodyCell,

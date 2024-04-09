@@ -36,14 +36,14 @@ export default {
       return this.data;
     },
   },
-  updated() {
-    if (
-      typeof this?.row[this.i] === "string" ||
-      this?.row[this.i] === null ||
-      this?.row[this.i] === undefined
-    ) {
-      this.$set(this.row, this.i, { data: "", isEdit: false });
-    }
-  },
+  // updated() {
+  //   if (
+  //     typeof this?.row[this.i] === "string" ||
+  //     this?.row[this.i] === null ||
+  //     this?.row[this.i] === undefined
+  //   ) {
+  //     this.$set(this.row, this.i, { data: "", isEdit: false });
+  //   }
+  // },
 };
 </script>
