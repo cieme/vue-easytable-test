@@ -1,52 +1,83 @@
 <template>
   <div class="container">
-    <div class="btn-group">
-      <button @click="addRow">添加行</button>
-      <button @click="addCol">添加列</button>
-      <button @click="saveData">保存数据</button>
+    <div v-click-outside="clickoutsideHandle" style="background: red">
+      <div class="btn-group">
+        <button @click="addRow">添加行</button>
+        <button @click="addCol">添加列</button>
+        <button @click="saveData">保存数据</button>
+      </div>
+      <ve-table
+        max-height="calc(100%)"
+        fixed-header
+        ref="veTable"
+        style="width: 100%"
+        :scroll-width="0"
+        :columns="columns"
+        :table-data="tableData"
+        :border-around="true"
+        :border-x="true"
+        :border-y="true"
+        :rowStyleOption="rowStyleOption"
+        row-key-field-name="rowKey"
+        :clipboard-option="clipboardOption"
+        :columnWidthResizeOption="columnWidthResizeOption"
+        :cell-selection-option="cellSelectionOption"
+        :eventCustomOption="eventCustomOption"
+      />
+      <input type="text" value="12343241" />
     </div>
-    <ve-table
-      max-height="calc(100%)"
-      fixed-header
-      ref="veTable"
-      style="width: 100%"
-      :scroll-width="0"
-      :columns="columns"
-      :table-data="tableData"
-      :border-around="true"
-      :border-x="true"
-      :border-y="true"
-      :rowStyleOption="rowStyleOption"
-      row-key-field-name="rowKey"
-      :clipboard-option="clipboardOption"
-      :columnWidthResizeOption="columnWidthResizeOption"
-      :eventCustomOption="eventCustomOption"
-    />
   </div>
 </template>
 
 <script>
+import clickoutside from "./directives/clickoutside";
+import BodyCell from "./components/bodyCell.vue";
 export default {
+  components: {
+    // eslint-disable-next-line vue/no-unused-components
+    BodyCell,
+  },
+  directives: {
+    "click-outside": clickoutside,
+  },
+  provide() {
+    return {
+      veTable: this,
+    };
+  },
   data() {
     return {
+      /*  */
+      copyData: null,
+      isEdit: false,
+      editData: null,
       eventCustomOption: {
         // body 列事件自定义
-        bodyCellEvents: ({ row, column, rowIndx }) => {
+        bodyCellEvents: ({ row, column, rowIndex }) => {
           return {
             click: (event) => {
+              /*  */
               if (event.shiftKey) {
                 this.$refs.veTable.$refs.editInputRef.$refs.textareaInputRef.focus();
                 return;
               }
             },
             dblclick: () => {
-              console.log("bodyCellEvents click", row, column, rowIndx);
+              rowIndex;
+              if (this.editData) {
+                this.editData.isEdit = false;
+              }
+
+              row[column.key].isEdit = true;
+              this.editData = row[column.key];
+              this.isEditToggle(true);
+              /*  */
+              // this.cellSelectionToggle(false);
             },
           };
         },
       },
 
-      copyData: null,
       clipboardOption: {
         copy: true,
         paste: false,
@@ -56,44 +87,19 @@ export default {
           this.clipboardOption.paste = true;
           this.copyData = data;
         },
-        afterPaste: ({ data, selectionRangeIndexes }) => {
+        afterPaste: ({ selectionRangeIndexes }) => {
           const oldData = this.copyData;
           const { startRowIndex, startColIndex } = selectionRangeIndexes;
 
           if (oldData == null) {
-            let tableDataRow = startRowIndex;
-            for (let index = 0; index < data.length; index++) {
-              const element = data[index];
-              let tableDataCol = startColIndex;
-              const xData = this.tableData[tableDataRow];
-              if (xData == undefined) {
-                return;
-              }
-              /*  */
-              for (const key in element) {
-                if (Object.hasOwnProperty.call(element, key)) {
-                  const item = element[key];
-                  let obj = {};
-                  if (item !== "[object Object]") {
-                    obj = JSON.parse(JSON.stringify(item));
-                  } else if (typeof item === "object") {
-                    obj = JSON.parse(JSON.stringify(item));
-                  } else {
-                    obj = item;
-                  }
-                  this.$set(xData, tableDataCol++, obj);
-                  // xData[tableDataCol++] = item;
-                }
-              }
-              tableDataRow++;
-            }
             return;
           }
           /* 正常复制 */
           let tableDataRow = startRowIndex;
+          console.log(tableDataRow);
           for (let index = 0; index < oldData.length; index++) {
             const element = oldData[index];
-            let tableDataCol = startColIndex;
+            let tableDataCol = startColIndex - 1;
             const xData = this.tableData[tableDataRow];
             if (xData == undefined) {
               return;
@@ -121,16 +127,18 @@ export default {
           /* 剪切本身不应该赋值,处理粘贴就好了 */
           // this.clipboardOption.afterPaste({ selectionRangeIndexes });
         },
+        beforeDelete: () => {
+          if (this.isEdit) {
+            return false;
+          }
+        },
         afterDelete: () => {
           /* 删除会让其变为 字符串 */
           // data, selectionRangeIndexes, selectionRangeKeys
         },
       },
-      columnResizeInfo: {
-        column: "",
-        differWidth: "",
-        columnWidth: "",
-        tableWidth: "",
+      cellSelectionOption: {
+        enable: true,
       },
       rowStyleOption: {
         clickHighlight: false,
@@ -146,6 +154,7 @@ export default {
           const currentColumn = this.columns.find(
             (item) => item.key === column.key
           );
+          console.log(currentColumn);
           currentColumn.width = columnWidth;
         },
       },
@@ -185,11 +194,33 @@ export default {
   },
   mounted() {
     this.addEvent();
+    this.$refs.veTable.enableStopEditing = false;
   },
 
   methods: {
+    clickoutsideHandle() {
+      this.$refs.veTable.tableClickOutside();
+    },
+    cellSelectionToggle(enable) {
+      this.cellSelectionOption.enable = enable;
+    },
+    isEditToggle(enable) {
+      this.isEdit = enable;
+      // console.log(enable);
+      // if (enable) {
+      //   /* 打开 */
+      //   console.log("打开");
+      //   this.$set(this.clipboardOption, "delete", false);
+      // } else {
+      //   console.log("禁用");
+      //   this.$set(this.clipboardOption, "delete", true);
+      // }
+    },
     addEvent() {
       const handle = (event) => {
+        // if (this.isEdit) {
+        //   return;
+        // }
         if (event.keyCode == 8) {
           const newEvent = new KeyboardEvent("keydown", {
             key: "Backspace",
@@ -210,34 +241,44 @@ export default {
         //   );
         // }
       };
+      const handle2 = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        this.clickoutsideHandle();
+      };
       document.addEventListener("keydown", handle);
+      document.addEventListener("contextmenu", handle2);
       this.$once("hook:beforeDestroy", () => {
         document.removeEventListener("keydown", handle);
+        document.removeEventListener("contextmenu", handle2);
       });
     },
     initColumns() {
       for (let i = 0; i < 3; i++) {
         this.columns.push({
-          key: `${i + 1}`,
-          title: `title_${i + 1}`,
+          key: `${i}`,
+          title: `title_${i}`,
           edit: false,
           width: 100,
           align: "center",
           children: [
             {
-              field: `${i + 1}`,
-              key: `${i + 1}`,
+              field: `${i}`,
+              key: `${i}`,
               title: `string`,
               edit: false,
               width: 100,
               renderBodyCell: ({ row, column, rowIndex }, h) => {
                 row, column, rowIndex, h;
-                if (row[`${i + 1}`]?.data instanceof Array) {
-                  return row[`${i + 1}`].data
-                    .map((item) => item.data)
-                    .join(",");
-                }
-                return row[`${i + 1}`]?.data;
+
+                return h(BodyCell, {
+                  props: {
+                    row,
+                    column,
+                    rowIndex,
+                    i,
+                  },
+                });
               },
             },
           ],
@@ -250,20 +291,26 @@ export default {
         const obj = {};
         if (i < 3) {
           for (let j = 0; j < 3; j++) {
-            obj[`${j + 1}`] = {
+            obj[`${j}`] = {
               isEdit: false,
-              data: `${j + 1}_${i + 1}`,
+              data: `${j}_${i}`,
             };
           }
-          obj[`3`] = {
+          obj[`2`] = {
             isEdit: false,
             data: [{ data: "11" }, { data: "22" }, { data: "33" }],
           };
         } else {
           for (let j = 0; j < 3; j++) {
-            obj[`${j + 1}`] = null;
+            obj[`${j}`] = {
+              isEdit: false,
+              data: "",
+            };
           }
-          obj[`3`] = null;
+          obj[`2`] = {
+            isEdit: false,
+            data: "",
+          };
         }
         obj.rowKey = i;
         data.push(obj);
@@ -298,7 +345,9 @@ export default {
             renderBodyCell: ({ row, column, rowIndex }, h) => {
               row, column, rowIndex, h;
               if (row[`${lastLength}`] instanceof Array) {
-                return row[`${lastLength}`].map((item) => item.data).join(",");
+                return row[`${lastLength}`].data
+                  .map((item) => item.data)
+                  .join(",");
               }
               return row[`${lastLength}`]?.data;
             },
@@ -312,7 +361,14 @@ export default {
       /* 处理数据 */
       for (let index = 0; index < colLength; index++) {
         const obj = this.tableData[index];
-        this.$set(obj, `${colLength + 1}`, null);
+        if (obj) {
+          this.$set(obj, `${colLength + 1}`, { isEdit: false, data: null });
+        }
+        // else {
+        //   this.$set(this.tableData, index, {
+        //     rowKey: index,
+        //   });
+        // }
       }
     },
     saveData() {
@@ -336,8 +392,7 @@ body {
   width: 100%;
   height: 100vh;
 }
-.vue-table-root,
-.ve-table {
+.vue-table-root {
   height: 100%;
 }
 .btn-group {

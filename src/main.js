@@ -9,6 +9,11 @@ import "vue-easytable/libs/theme-default/index.css";
 import VueEasytable from "vue-easytable/packages/index";
 
 Vue.use(VueEasytable);
+/*  */
+import ElementUI from "element-ui";
+import "element-ui/lib/theme-chalk/index.css";
+Vue.use(ElementUI);
+
 Vue.config.productionTip = false;
 
 new Vue({
