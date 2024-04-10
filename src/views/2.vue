@@ -2,9 +2,9 @@
   <div class="container">
     <div v-click-outside="clickoutsideHandle" style="background: red">
       <div class="btn-group">
-        <button @click="addRow">添加行2</button>
-        <button @click="addCol">添加列2</button>
-        <button @click="saveData">保存数据2</button>
+        <el-button type="primary" @click="addRow">添加行2</el-button>
+        <el-button type="primary" @click="addCol">添加列2</el-button>
+        <el-button type="primary" @click="saveData">保存数据2</el-button>
       </div>
       <ve-table
         max-height="calc(100%)"
@@ -32,11 +32,14 @@
 <script>
 import clickoutside from "./directives/clickoutside";
 import BodyCell from "./components/bodyCell.vue";
+import bodyTitleCell from "./components/bodyTitleCell.vue";
 export default {
   name: "ViewView2",
   components: {
     // eslint-disable-next-line vue/no-unused-components
     BodyCell,
+    // eslint-disable-next-line vue/no-unused-components
+    bodyTitleCell,
   },
   directives: {
     "click-outside": clickoutside,
@@ -52,7 +55,30 @@ export default {
       copyData: null,
       isEdit: false,
       editData: null,
+      editHeaderData: null,
       eventCustomOption: {
+        headerCellEvents: ({ column, rowIndex }) => {
+          return {
+            dblclick: () => {
+              const key = column.key;
+              const currentColumn = this.columns.find(
+                (item) => item.key === key
+              );
+              if (this.editHeaderData) {
+                this.editHeaderData.isEdit = false;
+                this.editHeaderData.children[0].isEdit = false;
+              }
+              this.editHeaderData = currentColumn;
+              if (rowIndex == 0) {
+                currentColumn.isEdit = true;
+              } else if (rowIndex == 1) {
+                currentColumn.children[0].isEdit = true;
+                /* 取children */
+              }
+              this.isEditToggle(true);
+            },
+          };
+        },
         // body 列事件自定义
         bodyCellEvents: ({ row, column, rowIndex }) => {
           return {
@@ -203,6 +229,7 @@ export default {
           editable: false,
           edit: false,
           operationColumn: true,
+          isEdit: false,
           children: [
             {
               field: "index",
@@ -212,6 +239,7 @@ export default {
               editable: false,
               edit: false,
               operationColumn: true,
+              isEdit: false,
               renderBodyCell: ({ row, column, rowIndex }, h) => {
                 row, column, h;
                 return ++rowIndex;
@@ -309,6 +337,18 @@ export default {
           edit: false,
           width: 100,
           align: "center",
+          isEdit: false,
+          renderHeaderCell: ({ column }, h) => {
+            const currentColumn = this.columns.find(
+              (item) => item.key === column.key
+            );
+            return h(bodyTitleCell, {
+              props: {
+                column: currentColumn,
+                i,
+              },
+            });
+          },
           children: [
             {
               field: `${i}`,
@@ -316,13 +356,26 @@ export default {
               title: `string`,
               edit: false,
               width: 100,
+              isEdit: false,
+              renderHeaderCell: ({ column }, h) => {
+                const currentColumn = this.columns.find(
+                  (item) => item.key === column.key
+                );
+                return (
+                  currentColumn.children[0].title +
+                  currentColumn.children[0].isEdit
+                );
+              },
               renderBodyCell: ({ row, column, rowIndex }, h) => {
                 row, column, rowIndex, h;
-
+                // console.log(row, column, rowIndex);
+                const currentColumn = this.columns.find(
+                  (item) => item.key === column.key
+                );
                 return h(BodyCell, {
                   props: {
                     row,
-                    column,
+                    column: currentColumn.children[0],
                     rowIndex,
                     i,
                   },
@@ -376,7 +429,7 @@ export default {
       this.tableData.push(obj);
     },
     addCol() {
-      const lastLength = this.columns.length;
+      const lastLength = this.columns.length - 1;
       this.columns.push({
         key: `${lastLength}`,
         title: `title_${lastLength}`,
@@ -387,17 +440,29 @@ export default {
           {
             field: `${lastLength}`,
             key: `${lastLength}`,
-            title: `string`,
+            title: `number`,
             edit: true,
             width: 100,
+            renderHeaderCell: ({ column }, h) => {
+              const currentColumn = this.columns.find(
+                (item) => item.key === column.key
+              );
+              return currentColumn.children[0].title;
+            },
             renderBodyCell: ({ row, column, rowIndex }, h) => {
               row, column, rowIndex, h;
-              if (row[`${lastLength}`] instanceof Array) {
-                return row[`${lastLength}`].data
-                  .map((item) => item.data)
-                  .join(",");
-              }
-              return row[`${lastLength}`]?.data;
+              // console.log(row, column, rowIndex);
+              const currentColumn = this.columns.find(
+                (item) => item.key === column.key
+              );
+              return h(BodyCell, {
+                props: {
+                  row,
+                  column: currentColumn.children[0],
+                  rowIndex,
+                  i: lastLength,
+                },
+              });
             },
           },
         ],
@@ -418,6 +483,8 @@ export default {
         //   });
         // }
       }
+      console.log(this.columns);
+      console.log(this.tableData);
     },
     saveData() {
       /*  */
@@ -425,35 +492,9 @@ export default {
       //   columns: this.columns,
       //   tableData: {},
       // };
+      console.log(this.columns);
       console.log(this.tableData);
     },
   },
 };
 </script>
-<style>
-body {
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
-}
-.container {
-  width: 100%;
-  height: 100vh;
-}
-.vue-table-root {
-  height: 100%;
-}
-.ve-table {
-  height: 100vh;
-}
-.btn-group {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 999;
-}
-/* .ve-table .ve-table-edit-input-container {
-  opacity: 1 !important;
-  z-index: 2 !important;
-} */
-</style>

@@ -1,21 +1,16 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
   <div style="width: 100%; height: 100%">
-    {{ row[i]?.isEdit }}
-    <Edit v-if="isEdit" :column="column" :cellData.sync="row[i]" />
-    <div v-else style="line-height: 40px">
-      <template>
-        {{ dataRender }}
-      </template>
-    </div>
+    <bodyTitleEdit :cellData.sync="column" v-if="column.isEdit" />
+    <template v-else> {{ column.title }} </template>
   </div>
 </template>
 <script>
-import Edit from "./Edit.vue";
+import bodyTitleEdit from "./bodyTitleEdit";
 export default {
-  name: "BodyCell",
+  name: "BodyTitleCell",
   components: {
-    Edit,
+    bodyTitleEdit,
   },
   props: {
     row: Object,
@@ -37,14 +32,5 @@ export default {
       return this.data;
     },
   },
-  // updated() {
-  //   if (
-  //     typeof this?.row[this.i] === "string" ||
-  //     this?.row[this.i] === null ||
-  //     this?.row[this.i] === undefined
-  //   ) {
-  //     this.$set(this.row, this.i, { data: "", isEdit: false });
-  //   }
-  // },
 };
 </script>

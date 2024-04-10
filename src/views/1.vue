@@ -383,27 +383,3 @@ export default {
   },
 };
 </script>
-<style>
-body {
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
-}
-.container {
-  width: 100%;
-  height: 100vh;
-}
-.vue-table-root {
-  height: 100vh;
-}
-.btn-group {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 999;
-}
-/* .ve-table .ve-table-edit-input-container {
-  opacity: 1 !important;
-  z-index: 2 !important;
-} */
-</style>

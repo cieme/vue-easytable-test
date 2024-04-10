@@ -1,19 +1,7 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
   <div style="width: 100%; height: 100%" @click.stop>
-    <el-input
-      v-if="cellData.title == 'number'"
-      v-model="cellData.data"
-      type="number"
-    ></el-input>
-    <el-input
-      v-else
-      type="textarea"
-      autosize
-      v-model="cellData.data"
-      ref="textareaInputRef"
-      @input.native="inputHandle"
-    />
+    <el-input v-model="cellData.title" type="text"></el-input>
   </div>
 </template>
 <script>
@@ -60,13 +48,6 @@ export default {
         document.removeEventListener("click", handle);
         document.removeEventListener("contextmenu", handle);
       });
-    },
-    inputHandle(e) {
-      console.log(e.target.value);
-      // if (e.target.value === "[object Object]") {
-      //   // eslint-disable-next-line vue/no-mutating-props
-      //   this.cellData.data = "";
-      // }
     },
     keydownHandle(e) {
       if (e.keyCode === 8 || e.keyCode === 46) {

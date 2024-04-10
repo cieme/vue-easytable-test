@@ -1,0 +1,28 @@
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+.container {
+  width: 100%;
+  height: 100vh;
+}
+.vue-table-root {
+  height: 100%;
+}
+.ve-table {
+  height: 100vh;
+}
+.btn-group {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 999;
+}
+/* .ve-table .ve-table-edit-input-container {
+  opacity: 1 !important;
+  z-index: 2 !important;
+} */
+/* .ve-table .ve-table-container .ve-table-content-wrapper table.ve-table-content {
+  min-width: auto;
+} */
