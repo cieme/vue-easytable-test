@@ -342,6 +342,7 @@ export default {
             const currentColumn = this.columns.find(
               (item) => item.key === column.key
             );
+
             return h(bodyTitleCell, {
               props: {
                 column: currentColumn,
@@ -429,13 +430,28 @@ export default {
       this.tableData.push(obj);
     },
     addCol() {
+      /* col */
       const lastLength = this.columns.length - 1;
-      this.columns.push({
+      const col = {
         key: `${lastLength}`,
         title: `title_${lastLength}`,
         edit: true,
         width: 100,
         align: "center",
+        isEdit: false,
+        renderHeaderCell: ({ column }, h) => {
+          const currentColumn = col;
+          // const currentColumn = this.columns.find(
+          //   (item) => item.key === column.key
+          // );
+          console.log(col);
+          return h(bodyTitleCell, {
+            props: {
+              column: currentColumn,
+              i: lastLength,
+            },
+          });
+        },
         children: [
           {
             field: `${lastLength}`,
@@ -443,18 +459,18 @@ export default {
             title: `number`,
             edit: true,
             width: 100,
+            isEdit: false,
             renderHeaderCell: ({ column }, h) => {
-              const currentColumn = this.columns.find(
-                (item) => item.key === column.key
+              const currentColumn = col;
+              return (
+                currentColumn.children[0].title +
+                currentColumn.children[0].isEdit
               );
-              return currentColumn.children[0].title;
             },
             renderBodyCell: ({ row, column, rowIndex }, h) => {
               row, column, rowIndex, h;
               // console.log(row, column, rowIndex);
-              const currentColumn = this.columns.find(
-                (item) => item.key === column.key
-              );
+              const currentColumn = col;
               return h(BodyCell, {
                 props: {
                   row,
@@ -466,22 +482,21 @@ export default {
             },
           },
         ],
-      });
+      };
+      this.columns.push(col);
+
+      /* row */
       const colLength = Object.keys(this.tableData[0]).filter(
         (item) => item !== "rowKey"
       ).length;
+      /* 列长 */
 
-      /* 处理数据 */
-      for (let index = 0; index < colLength; index++) {
+      /* 处理数据,较为重要 */
+      for (let index = 0; index <= colLength; index++) {
         const obj = this.tableData[index];
         if (obj) {
-          this.$set(obj, `${colLength + 1}`, { isEdit: false, data: null });
+          this.$set(obj, `${colLength}`, { isEdit: false, data: null });
         }
-        // else {
-        //   this.$set(this.tableData, index, {
-        //     rowKey: index,
-        //   });
-        // }
       }
       console.log(this.columns);
       console.log(this.tableData);

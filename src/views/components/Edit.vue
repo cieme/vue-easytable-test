@@ -12,11 +12,11 @@
       autosize
       v-model="cellData.data"
       ref="textareaInputRef"
-      @input.native="inputHandle"
     />
   </div>
 </template>
 <script>
+// @input.native="inputHandle"
 // @keydown.native="keydownHandle"
 export default {
   // eslint-disable-next-line vue/multi-word-component-names
@@ -62,7 +62,7 @@ export default {
       });
     },
     inputHandle(e) {
-      console.log(e.target.value);
+      // console.log(e.target.value);
       // if (e.target.value === "[object Object]") {
       //   // eslint-disable-next-line vue/no-mutating-props
       //   this.cellData.data = "";

@@ -1,6 +1,7 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
   <div style="width: 100%; height: 100%">
+    {{ i }}
     {{ row[i]?.isEdit }}
     <Edit v-if="isEdit" :column="column" :cellData.sync="row[i]" />
     <div v-else style="line-height: 40px">
